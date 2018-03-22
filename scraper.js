@@ -1,12 +1,6 @@
 var XMLHttpRequest = require("xmlhttprequest").XMLHttpRequest;
 var firebase = require('firebase');
 
-const APP_SECRET = 'c483463796702394e21785b63321f7a0';
-const APP_ID = '592427624453133';
-const ACCESS_TOKEN = '592427624453133|cXjZJnH2TnUVOm7aS8TpuZ1N6Ok';
-const MIT_PAGE_ID = '462508190484900';
-const BASE = 'https://graph.facebook.com/v2.11';
-
 // Initialize Firebase
 var config = {
   apiKey: "AIzaSyDYaBSb8t7kQkRat7k-PXlHYTkYENArh3s",
@@ -36,10 +30,13 @@ var HttpClient = function() {
 
 const post_id = '462508190484900_1728617183873988';
 
-const base = BASE;
+const ACCESS_TOKEN = '592427624453133|cXjZJnH2TnUVOm7aS8TpuZ1N6Ok';
+const PAGE_ID = '462508190484900';
+const BASE = 'https://graph.facebook.com/v2.11';
+
 const feed_node = "/" + MIT_PAGE_ID + "/feed";
 const parameters = "/?access_token=" + ACCESS_TOKEN;
-const feed_url = base + feed_node + parameters
+const FEED_URL = BASE + feed_node + parameters
 
 
 var scrapeSinglePage = function(url, aCallback) {
