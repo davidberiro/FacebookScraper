@@ -20,7 +20,7 @@ var HttpClient = function() {
                 console.log('success');
                 aCallback(anHttpRequest.responseText);
             }else{
-              console.log('failed');
+              console.log('waiting');
             }
         }
         anHttpRequest.open( "GET", aUrl, true );            
@@ -28,18 +28,23 @@ var HttpClient = function() {
       }
 }
 
-const post_id = '462508190484900_1728617183873988';
-
 const ACCESS_TOKEN = '592427624453133|cXjZJnH2TnUVOm7aS8TpuZ1N6Ok';
 const PAGE_ID = '462508190484900';
 const BASE = 'https://graph.facebook.com/v2.11';
 
-const feed_node = "/" + MIT_PAGE_ID + "/feed";
-const parameters = "/?access_token=" + ACCESS_TOKEN;
-const FEED_URL = BASE + feed_node + parameters
+// returns url for facebook graph api that just returns the feed
+// not including comments or likes
+var getFacebookFeedUrl = (page_id, access_token) => {
+  return BASE + "/" + page_id + "/feed/?access_token=" + access_token;
+}
 
+// returns url for facebook graph api that includes comments and likes
+var getCompleteFacebookFeedUrl = (page_id, access_token) => {
+  return BASE + "/" + page_id + "/feed/?fields=message,comments.limit(999).summary(true),likes.limit(999).summary(true)" + "&access_token=" + access_token;
+        
+}
 
-var scrapeSinglePage = function(url, aCallback) {
+var scrapeSinglePage = (url, aCallback) => {
   var client = new HttpClient();
   
   client.get(url, function(response) {
@@ -49,23 +54,20 @@ var scrapeSinglePage = function(url, aCallback) {
   });  
 }
 
-var addPostToFirebase = function(postId, timeCreated, text) {
-  firebase.database().ref('posts/'+postId).set({
-    time_created: timeCreated,
-    text: text,
-    postId: postId
+var addPostToFirebase = (post) => {
+  firebase.database().ref('posts/'+post.id).set({
+    ...post
   })
 }
 
 var addListOfPostsToFirebase = function(listOfPosts) {
   listOfPosts.forEach(function(element) {
-    addPostToFirebase(element.id, element.created_time, element.message);
+    addPostToFirebase(element);
   });
 }
 
-var client = new HttpClient();
-client.get(BASE+"/"+post_id+"/likes"+parameters, function(response) {
-  var res = JSON.parse(response);
-  console.log('logging response');
-  console.log(res);
-});
+var url = getCompleteFacebookFeedUrl(PAGE_ID, ACCESS_TOKEN);
+scrapeSinglePage(url, addListOfPostsToFirebase);
+setTimeout(() => {
+  firebase.database().goOffline();
+}, 10000);
