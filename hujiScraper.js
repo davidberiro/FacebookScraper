@@ -1,16 +1,15 @@
 var XMLHttpRequest = require("xmlhttprequest").XMLHttpRequest;
 var firebase = require('firebase');
 
-// Initialize Firebase
 var config = {
-  apiKey: "AIzaSyDYaBSb8t7kQkRat7k-PXlHYTkYENArh3s",
-  authDomain: "mitconfessions-f127f.firebaseapp.com",
-  databaseURL: "https://mitconfessions-f127f.firebaseio.com",
-  projectId: "mitconfessions-f127f",
+  apiKey: "AIzaSyBkPzxch8JGq6gQYgFCKFPSNtsNFDk8GyM",
+  authDomain: "hujiconfessions-de0d3.firebaseapp.com",
+  databaseURL: "https://hujiconfessions-de0d3.firebaseio.com",
+  projectId: "hujiconfessions-de0d3",
   storageBucket: "",
-  messagingSenderId: "65581099978"
+  messagingSenderId: "938333630721"
 };
-// firebase.initializeApp(config);
+firebase.initializeApp(config);
 
 var HttpClient = function() {
     this.get = function(aUrl, aCallback) {
@@ -29,7 +28,7 @@ var HttpClient = function() {
 }
 
 const ACCESS_TOKEN = '592427624453133|cXjZJnH2TnUVOm7aS8TpuZ1N6Ok';
-const PAGE_ID = '462508190484900';
+const PAGE_ID = '323288791493138';
 const BASE = 'https://graph.facebook.com/v2.11';
 
 // returns url for facebook graph api that just returns the feed
@@ -48,15 +47,18 @@ var scrapeSinglePage = (url, aCallback) => {
   
   client.get(url, function(response) {
     var res = JSON.parse(response);
+    var data = res.data;
     aCallback(res);
   });  
 }
+
 
 var addPostToFirebase = (post) => {
   firebase.database().ref('posts/'+post.id).set({
     ...post
   })
 }
+
 
 var addListOfPostsToFirebase = (listOfPosts) => {
   listOfPosts = listOfPosts.data;
@@ -76,18 +78,14 @@ var scrapeMultiplePages = (url, aCallback, num) => {
 }
 
 var url = getCompleteFacebookFeedUrl(PAGE_ID, ACCESS_TOKEN);
-// scrapeSinglePage(url, addListOfPostsToFirebase);
-// setTimeout(() => {
-//   firebase.database().goOffline();
-// }, 10000);
-var client = new HttpClient();
-client.get(url, (response) => {
-  var res = JSON.parse(response);
-  var data = res.data;
-  console.log(res);
-})
-
-
-
-
+scrapeMultiplePages(url, addListOfPostsToFirebase, 10);
+setTimeout(() => {
+  firebase.database().goOffline();
+}, 90000);
+// var client = new HttpClient();
+// client.get(url, (response) => {
+//   var res = JSON.parse(response);
+//   var data = res.data;
+//   console.log(res);
+// })
 
