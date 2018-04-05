@@ -31,6 +31,8 @@ const ACCESS_TOKEN = '592427624453133|cXjZJnH2TnUVOm7aS8TpuZ1N6Ok';
 const PAGE_ID = '323288791493138';
 const BASE = 'https://graph.facebook.com/v2.11';
 
+const GET_ALL = "/feed/?fields=message,created_time,comments.limit(999).summary(true){message,from,likes.limit(999).summary(true)},likes.limit(999).summary(true)&access_token=";
+
 // returns url for facebook graph api that just returns the feed
 // not including comments or likes
 var getFacebookFeedUrl = (page_id, access_token) => {
@@ -39,7 +41,7 @@ var getFacebookFeedUrl = (page_id, access_token) => {
 
 // returns url for facebook graph api that includes comments and likes
 var getCompleteFacebookFeedUrl = (page_id, access_token) => {
-  return BASE + "/" + page_id + "/feed/?fields=message,created_time,comments.limit(999).summary(true){message,from,likes.limit(999).summary(true)},likes.limit(999).summary(true)" + "&access_token=" + access_token;        
+  return BASE + "/" + page_id + GET_ALL + access_token;        
 }
 
 var scrapeSinglePage = (url, aCallback) => {
@@ -55,7 +57,13 @@ var scrapeSinglePage = (url, aCallback) => {
 
 var addPostToFirebase = (post) => {
   firebase.database().ref('posts/'+post.id).set({
-    ...post
+    ...post.created_time,
+    ...post.message,
+    ...post.likes,
+    ...post.id
+  })
+  firebase.database().ref('comments/'+post.id).set({
+    ...post.comments
   })
 }
 
@@ -67,25 +75,20 @@ var addListOfPostsToFirebase = (listOfPosts) => {
   });
 }
 
-var scrapeMultiplePages = (url, aCallback, num) => {
+var scrapeMultiplePages = (url, num, aCallback) => {
   if (num === 0) {
     return;
   }
   scrapeSinglePage(url, (res) => {
     aCallback(res);
-    scrapeMultiplePages(res.paging.next, aCallback, num-1);
+    scrapeMultiplePages(res.paging.next, num-1, aCallback);
   })
 }
 
 var url = getCompleteFacebookFeedUrl(PAGE_ID, ACCESS_TOKEN);
-scrapeMultiplePages(url, addListOfPostsToFirebase, 10);
+scrapeMultiplePages(url, 2, addListOfPostsToFirebase);
 setTimeout(() => {
   firebase.database().goOffline();
 }, 90000);
-// var client = new HttpClient();
-// client.get(url, (response) => {
-//   var res = JSON.parse(response);
-//   var data = res.data;
-//   console.log(res);
-// })
+
 

@@ -10,7 +10,7 @@ var config = {
   storageBucket: "",
   messagingSenderId: "65581099978"
 };
-// firebase.initializeApp(config);
+firebase.initializeApp(config);
 
 var HttpClient = function() {
     this.get = function(aUrl, aCallback) {
@@ -20,7 +20,7 @@ var HttpClient = function() {
                 console.log('success');
                 aCallback(anHttpRequest.responseText);
             }else{
-              console.log('waiting');
+              console.log(anHttpRequest.status);
             }
         }
         anHttpRequest.open( "GET", aUrl, true );            
@@ -28,9 +28,11 @@ var HttpClient = function() {
       }
 }
 
+//change page id to scrape a different page
 const ACCESS_TOKEN = '592427624453133|cXjZJnH2TnUVOm7aS8TpuZ1N6Ok';
 const PAGE_ID = '462508190484900';
-const BASE = 'https://graph.facebook.com/v2.11';
+
+const BASE = 'https://graph.facebook.com/v2.12';
 
 // returns url for facebook graph api that just returns the feed
 // not including comments or likes
@@ -43,6 +45,7 @@ var getCompleteFacebookFeedUrl = (page_id, access_token) => {
   return BASE + "/" + page_id + "/feed/?fields=message,created_time,comments.limit(999).summary(true){message,from,likes.limit(999).summary(true)},likes.limit(999).summary(true)" + "&access_token=" + access_token;        
 }
 
+//scrapes single page and applies callback function on the response
 var scrapeSinglePage = (url, aCallback) => {
   var client = new HttpClient();
   
@@ -65,27 +68,30 @@ var addListOfPostsToFirebase = (listOfPosts) => {
   });
 }
 
-var scrapeMultiplePages = (url, aCallback, num) => {
+//scrapes multple pages, and applies aCallback to each response object
+var scrapeMultiplePages = (url, num, aCallback) => {
   if (num === 0) {
     return;
   }
   scrapeSinglePage(url, (res) => {
     aCallback(res);
-    scrapeMultiplePages(res.paging.next, aCallback, num-1);
+    scrapeMultiplePages(res.paging.next, num-1, aCallback);
   })
 }
 
-var url = getCompleteFacebookFeedUrl(PAGE_ID, ACCESS_TOKEN);
-// scrapeSinglePage(url, addListOfPostsToFirebase);
-// setTimeout(() => {
-//   firebase.database().goOffline();
-// }, 10000);
+
+//example usage//
+
 var client = new HttpClient();
-client.get(url, (response) => {
-  var res = JSON.parse(response);
-  var data = res.data;
+var url = getFacebookFeedUrl(PAGE_ID, ACCESS_TOKEN);
+client.get(url, (res) => {
   console.log(res);
 })
+
+// var url = getCompleteFacebookFeedUrl(PAGE_ID, ACCESS_TOKEN);
+// scrapeMultiplePages(url, 3, (res) => {
+//   console.log(res);
+// })
 
 
 
